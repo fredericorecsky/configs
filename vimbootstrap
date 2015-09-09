@@ -3,13 +3,16 @@
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 use Cwd;
 use File::Copy;
 use File::Path qw< make_path >;
 
 my $dot_vimrc = $ENV{ HOME } . "/.vimrc";
 my $dot_vim_path = $ENV{ HOME } . "/.vim";
-my $plugin_git = $dot_vim_path . "/git";
+my $dot_vim_colors = $dot_vim_path . "/colors";
+my $dot_plugin_git = $dot_vim_path . "/git";
 
 my @vim_plugins = (
     'https://github.com/fholgado/minibufexpl.vim.git',
@@ -17,7 +20,7 @@ my @vim_plugins = (
 );
 
 sub vimrc_bootstrap {
-    if ( -e $dot_vimrc )
+    if ( -e $dot_vimrc ) {
         copy ( $dot_vimrc, $dot_vimrc. ".vc_bck" )
             or die "There is a .vimrc file and was not possible make a backup. $!\n";
     }
@@ -29,15 +32,15 @@ sub vimrc_bootstrap {
 }
 
 sub vim_directory_bootstrap {
-    make_path ( $dot_vim_path, $dot_plugin_git );
+    make_path ( $dot_vim_path, $dot_plugin_git, $dot_vim_colors );
     chdir ( $dot_plugin_git );
     for my $plugin ( @vim_plugins ) {
         #todo check errors
         my $cmd = `git clone $plugin`;
     }
-    open my $dh, $dot_plugin_git
+    opendir my $dh, $dot_plugin_git 
         or die "Could not read plugins from directory $dot_plugin_git\n $!\n";
-    my @directories = grep { !/^\./ } readdir ( $dir );
+    my @directories = grep { !/^\./ } readdir ( $dh );
     close $dh;
     for my $directory ( @directories ) {
         print "installing $directory...\n";
@@ -61,5 +64,7 @@ set expandtab
 set shiftwidth=4
 set wildchar=<F8>
 set number
-set bg=dark
+set bg=light
 set list
+syntax on
+colorscheme ashen
