@@ -17,6 +17,7 @@ my $dot_plugin_git = $dot_vim_path . "/git";
 my @vim_plugins = (
     'https://github.com/fholgado/minibufexpl.vim.git',
     'https://github.com/fredericorecsky/vonque-shell.git',
+    'https://github.com/fredericorecsky/vonque-colors.git',
 );
 
 sub vimrc_bootstrap {
