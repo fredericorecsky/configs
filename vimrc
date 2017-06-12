@@ -6,7 +6,7 @@ set expandtab
 set shiftwidth=4
 set wildchar=<F8>
 set number
-set bg=dark
+set bg=light
 set list
-set listchars=tab:\|-,trail:_
-
+syntax on
+colorscheme colorsbox-stblue
