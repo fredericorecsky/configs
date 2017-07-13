@@ -8,11 +8,13 @@ use Data::Dumper;
 use Cwd qw/abs_path getcwd/;
 use File::Basename;
 use Module::ScanDeps;
-use Redis;
 
-my $redis = redis_init();
-
-my $file = shift @ARGV;
+my $file;
+for my $arg ( @ARGV ) {
+    if ( -e $arg ) {
+        $file = $arg;
+    }
+}
 
 my $context = {
     cwd             => getcwd,
@@ -57,50 +59,16 @@ if ( $? ) {
     print "Syncronized $context->{ remote }:$context->{ git_tree }\n";
 }
 
-my $debug = $redis->get('enable_debug');
-
-my $perl = $debug ? "perl -d" : "perl";
-
 my @cmd = (
     'ssh', $context->{ remote }, 
     'echo -n "Remote Shell PID:";',
     'echo $$;', 
     "export PERL5LIB=$context->{ git_tree }/lib;", 
     'cd', "$context->{ cwd };", 
-    'perl', $file,  @ARGV, ';', 
+    'perl', @ARGV, ';', 
     'pgrep -P $$;'
     );
 
 exec @cmd;
-
-
-sub redis_init {
-    my $tries = 3;
-    my $redis;
-    while ( $tries ) {
-        $tries--;
-        eval {
-            $redis = Redis->new( server => 'localhost:6379' );
-        } or do {
-            warn "Is necessary run the redis server on the localhost!\n";
-            my $redis = `which redis-server 2>/dev/null`;
-            if ( $redis ) {
-                my $pid = fork();
-                if ( $pid ) {
-                    warn "Started redis, trying again!\n";
-                    sleep 1;
-                }else{
-                    exec $redis;
-                }
-            } else { 
-                die "redis-server not found! Sorry I can't continue!\n";
-            }
-        };
-        return $redis if $redis;
-        # load config if redis
-        warn "Trying more $tries times..\n";
-    }
-    die "Could not use redis or start it at all\n";
-}
 
 
