@@ -66,7 +66,13 @@ sub git_info {
             my ( $name, $server ) = split ( /\s/, $remote );
             $origin = basename $server;
         }
-        print "[$origin:$git_branch]";
+        print "[";
+        print color( 'magenta' );
+        print "$origin:";
+        print color( 'cyan' );
+        print "$git_branch";
+        print color( 'reset' );
+        print "]";
     }
 }
 
