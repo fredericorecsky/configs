@@ -9,66 +9,158 @@ use Cwd qw/abs_path getcwd/;
 use File::Basename;
 use Module::ScanDeps;
 
-my $file;
-for my $arg ( @ARGV ) {
-    if ( -e $arg ) {
-        $file = $arg;
-    }
-}
+$| = 1;
 
 my $context = {
+    work_cmd        => abs_path( $0 ),
     cwd             => getcwd,
-    file            => $file,
-    file_abs_path   => abs_path( $file ),
-    dir_abs_path    => dirname( abs_path( $file )),
+    cmd             => $0,
+    name            => 'rperl',
     remote          => undef,
     args            => [ @ARGV ],
     debug           => 0,
+    perl            => "perl",
 };
 
-if ( ! -e $context->{ file } ) {
-    die "Input script $context->{ file } does not exists\n";
+my %actions = (
+    rperl           => \&rperl,
+    test            => \&test,
+    reproduce       => \&reproduce,
+    host            => \&host,
+    dep             => \&dependencies,
+);
+
+if ( @ARGV ) {
+    if ( $ARGV[0] =~ /\:(\w+)/) {
+    $context->{ action } = $1;
+        if ( ! exists $actions{ $context->{ action } }){
+            die "Could not run such action $context->{ action }\n";
+        }
+        shift @{ $context->{ args } };
+    }else{
+        $context->{ action } = "rperl";
+    }
+}
+    
+$actions{ $context->{ action } }();
+
+sub test {
+    print Dumper $context;
 }
 
-chdir $context->{ dir_abs_path };
-$context->{ git_tree } = `git rev-parse --show-toplevel`;
-chomp $context->{ git_tree };
-chdir $context->{ cwd };
-
-die "The command $file is not on a git_tree\n" if $?;
-
-open my $fh, "<", "$ENV{ HOME }/.rperl_remote";  # data point
-    $context->{ remote } = <$fh>;
-close $fh;
-
-die "There is no remote configured, please run rperl_host!\n" if ! $context->{ remote };
-
-# For the first time sync, after followup the changed files
-print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote }\n";
-
-my $remote_dir = dirname $context->{ git_tree };
-
-my $r_mkdir = `ssh $context->{ remote } mkdir -p $remote_dir`;
-
-my $sync_cmd = "rsync --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir";
-my $sync = qx/$sync_cmd/;
-print $sync_cmd, "\n";
-if ( $? ) {
-    die "$?\nError when syncing $context->{ remote }:$context->{ git_tree }\n";
-}else{
-    print "Syncronized $context->{ remote }:$context->{ git_tree }\n";
+sub reproduce {
+    $context->{ file } = $context->{ work_cmd };
+    rperl();
 }
 
-my @cmd = (
-    'ssh', $context->{ remote }, 
-    'echo -n "Remote Shell PID:";',
-    'echo $$;', 
-    "export PERL5LIB=$context->{ git_tree }/lib;", 
-    'cd', "$context->{ cwd };", 
-    'perl', @ARGV, ';', 
-    'pgrep -P $$;'
-    );
+sub host {
+    remote_host();
+    print "Actual host: $context->{ remote }\n";
+}
 
-exec @cmd;
+sub input_file {
+    if ( ! $context->{ file } ) {
+        for my $arg ( @{ $context->{ args } } ) {
+            if ( -e $arg ) {
+                $context->{ file } = $arg;
+            }
+        }
+    }
+    if ( ! $context->{ file } || ! -e $context->{ file } ) {
+        die "One of the parameters must be a valid perl script\n";
+    }
+}
 
+sub git_top_level{ 
 
+    chdir $context->{ dir_abs_path };
+    $context->{ git_tree } = `git rev-parse --show-toplevel`;
+    chomp $context->{ git_tree };
+    chdir $context->{ cwd };
+    
+    die "The command $context->{ file } is not on a git_tree\n" if $?;
+}
+
+# required
+sub dependencies {
+    input_file();
+
+    git_top_level();
+
+    chdir "$context->{ git_tree }/lib";
+
+    my $what = scan_deps( files => [ $context->{ file } ] , recurse => 1 );
+
+    for my $module ( keys %$what ) {
+        if ( -e $module ) {
+            print "$module\n";
+        }
+    }
+}
+
+sub remote_host {
+    my $host = $context->{ args }[0];
+    
+    if ( $host ) {
+        my $run = `ssh $host exit`;  # TODO : exists_ssh_host
+        
+        if ( $? ){
+            die <<EOF;
+        The host: $host is offline or not configured on 
+        ssh config file. Please check your ssh config on 
+        $ENV{HOME}/.ssh/config.
+EOF
+        }else{
+            open my $fh , ">", "$ENV{HOME}/.rperl_remote" or die;
+                print $fh "$host";
+            close $fh;
+        }
+    }else{
+        #eval
+        open my $fh, "<", "$ENV{HOME}/.rperl_remote" or die;
+            $context->{ remote } = <$fh>;
+        close $fh;
+    }
+}
+
+sub rperl {
+   
+    input_file();
+   
+    $context->{ file_abs_path } = abs_path( $context->{ file } ); 
+    $context->{ dir_abs_path } = dirname( abs_path( $context->{ file } ));
+    
+    git_top_level();  
+   
+    remote_host();
+    die "There is no remote configured, please run rperl_host!\n" if ! $context->{ remote };
+    
+    # For the first time sync, after followup the changed files
+    print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote }\n";
+    
+    my $remote_dir = dirname $context->{ git_tree };
+    
+    my $r_mkdir = `ssh $context->{ remote } mkdir -p $remote_dir`;
+    
+    my $sync_cmd = "rsync --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir";
+    my $sync = qx/$sync_cmd/;
+    print $sync_cmd, "\n";
+    if ( $? ) {
+        die "$?\nError when syncing $context->{ remote }:$context->{ git_tree }\n";
+    }else{
+        print "Syncronized $context->{ remote }:$context->{ git_tree }\n";
+    }
+
+    my @cmd = (
+        'ssh', $context->{ remote }, 
+        'echo -n "Remote Shell PID:";',
+        'echo $$;', 
+        "export PERL5LIB=$context->{ git_tree }/lib;", 
+        'cd', "$context->{ cwd };", 
+        $context->{ perl }, @{ $context->{ args } }, ';', 
+        'pgrep -P $$;'
+        );
+    
+    exec @cmd;
+
+}
