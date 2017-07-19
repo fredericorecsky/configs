@@ -20,6 +20,7 @@ my $context = {
     args            => [ @ARGV ],
     debug           => 0,
     perl            => "perl",
+    dependencies    => [],
 };
 
 my %actions = (
@@ -27,7 +28,7 @@ my %actions = (
     test            => \&test,
     reproduce       => \&reproduce,
     host            => \&host,
-    dep             => \&dependencies,
+    dep             => \&list_dependencies,
 );
 
 if ( @ARGV ) {
@@ -54,7 +55,7 @@ sub reproduce {
 }
 
 sub host {
-    remote_host();
+    remote_host( $context->{ args }[0] );
     print "Actual host: $context->{ remote }\n";
 }
 
@@ -69,6 +70,9 @@ sub input_file {
     if ( ! $context->{ file } || ! -e $context->{ file } ) {
         die "One of the parameters must be a valid perl script\n";
     }
+   
+    $context->{ file_abs_path } = abs_path( $context->{ file } ); 
+    $context->{ dir_abs_path } = dirname( abs_path( $context->{ file } ));
 }
 
 sub git_top_level{ 
@@ -89,17 +93,26 @@ sub dependencies {
 
     chdir "$context->{ git_tree }/lib";
 
-    my $what = scan_deps( files => [ $context->{ file } ] , recurse => 1 );
+    my $what = scan_deps( files => [ $context->{ file_abs_path } ] , recurse => 0 );
 
     for my $module ( keys %$what ) {
         if ( -e $module ) {
-            print "$module\n";
+            push @{ $context->{ dependencies } }, $module;
         }
     }
 }
 
+sub list_dependencies {
+    dependencies();
+    if ( @{ $context->{ dependencies } } ) {
+        print join "\n", @{ $context->{ dependencies } }, "\n";
+    }else{
+        print "No local dependencies found for this module\n";
+    }
+}
+
 sub remote_host {
-    my $host = $context->{ args }[0];
+    my $host = shift;
     
     if ( $host ) {
         my $run = `ssh $host exit`;  # TODO : exists_ssh_host
@@ -126,9 +139,6 @@ EOF
 sub rperl {
    
     input_file();
-   
-    $context->{ file_abs_path } = abs_path( $context->{ file } ); 
-    $context->{ dir_abs_path } = dirname( abs_path( $context->{ file } ));
     
     git_top_level();  
    
