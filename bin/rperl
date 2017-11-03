@@ -221,12 +221,12 @@ EOF
                 print $fh "$host";
             close $fh;
         }
-    }else{
-        #eval
-        open my $fh, "<", "$ENV{HOME}/.rperl_remote" or die;
-            $context->{ remote } = <$fh>;
-        close $fh;
     }
+    
+    #eval
+    open my $fh, "<", "$ENV{HOME}/.rperl_remote" or die;
+        $context->{ remote } = <$fh>;
+    close $fh;
 }
 
 sub rsync {
