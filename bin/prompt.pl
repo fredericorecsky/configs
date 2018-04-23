@@ -19,20 +19,18 @@ host_dir();
 git_info();
 rperl();
 print "\n";
-print color( 'yellow' );
-print "\x{2605} "; # does not work for some fonts
-print color('reset' );
+print "\x{2605} :"; # does not work for some fonts
 
 sub status { 
     print "[";
     if ( $status ) {
         print color( 'red' );
-        print "\x{1f615}"; # does not work for some fonts
-        print " $status";
+        print " \x{1f615} "; # does not work for some fonts
+        print "$status";
     }else{
         print color( 'green' );
-        print "\x{2615}"; # does not work for some fonts
-        print "ok";
+        print " \x{2615} "; # does not work for some fonts
+        print " ok ";
     }
     print color('reset' );
     print "]"
@@ -43,7 +41,7 @@ sub host_dir {
     my $cwd = getcwd();
     my $ssh = ( $ENV{SSH_CLIENT} || $ENV{ SSH_TTY } ) ? 1 : 0;
     print "[";
-    print color( 'blue' ) if $ssh;
+    $ssh ? print color( 'on_blue' ) : print color( 'blue');
     print $hostname . ":";
     print color( 'reset' );
     if ( $cwd =~ /^$ENV{ HOME }(.*)/ ) {

@@ -32,6 +32,7 @@ my %actions = (
     test            => \&test,
     reproduce       => \&reproduce,
     host            => \&host,
+    remote_dir      => \&remote_dir,
     dep             => \&list_dependencies,
     alldep          => \&list_all_dependencies,
     changed         => \&modified,
@@ -54,8 +55,11 @@ if ( @ARGV ) {
 $actions{ $context->{ action } }();
 
 sub test {
+    remote_host();
+    _remote_dir();
     print Dumper $context;
 }
+
 
 sub reproduce {
     $context->{ file } = $context->{ work_cmd };
@@ -68,6 +72,11 @@ sub reproduce {
 sub host {
     remote_host( $context->{ args }[0] );
     print "Actual host: $context->{ remote }\n";
+}
+
+sub remote_dir{
+    _remote_dir( $context->{ args }[0] );
+    print "Actual remote directory is $context->{ remote_dir }\n";
 }
 
 sub remote {
@@ -229,18 +238,31 @@ EOF
     close $fh;
 }
 
+sub _remote_dir {
+    my $dir = shift;
+
+    if ( $dir ) {
+        open my $fh, ">", "$ENV{HOME}/.rperl_remote_dir" or die;
+            print $fh $dir;
+        close $fh;
+    } 
+
+    open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
+        $context->{ remote_dir } = <$fh>;
+    close $fh;
+}
+
 sub rsync {
 
     # check requirements
+    my $remote_dir = dirname( $context->{ remote_dir } ? $context->{ remote_dir } : $context->{ git_tree } );
 
     # For the first time sync, after followup the changed files
-    print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote }\n";
-    
-    my $remote_dir = dirname $context->{ git_tree };
+    print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote } on $remote_dir\n";
     
     my $r_mkdir = `ssh $context->{ remote } mkdir -p $remote_dir`;
     
-    my $sync_cmd = "rsync --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir";
+    my $sync_cmd = "rsync --exclude=.git --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir";
     warn "$sync_cmd \n";
     my $sync = qx/$sync_cmd/;
     print $sync_cmd, "\n";
@@ -255,6 +277,7 @@ sub prepare_to_run {
     input_file();
     git_top_level();  
     remote_host();
+    _remote_dir();
     die "There is no remote configured, please run rperl_host!\n" 
         if ! $context->{ remote };
 }
@@ -300,13 +323,13 @@ sub rperl {
     prepare_to_run();
 
     rsync();
-    
+
     my @cmd = (
         'ssh', $context->{ remote }, 
         'echo -n "Remote Shell PID:";',
         'echo $$;', 
-        "export PERL5LIB=$context->{ git_tree }/lib;", 
-        'cd', "$context->{ cwd };", 
+        "export PERL5LIB=" . ( $context->{ remote_dir } || $context->{ git_tree } ) . "/lib;", 
+        'cd',( "$context->{ remote_dir };" || "$context->{ cwd };" ), 
         $context->{ perl }, @{ $context->{ args } }, ';', 
         'pgrep -P $$;'
         );
