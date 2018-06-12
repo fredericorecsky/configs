@@ -196,7 +196,7 @@ sub dependencies {
 sub list_dependencies {
     dependencies();
     if ( @{ $context->{ dependencies } } ) {
-        print "$context->{ file }\n";
+        print "$context->{ file_abs_path }\n";
         print join "\n", ( map { "$context->{ git_tree }/lib/$_" } @{ $context->{ dependencies } } ) , "\n";
     }else{
         print "No local dependencies found for this module\n";
@@ -206,7 +206,7 @@ sub list_dependencies {
 sub list_all_dependencies {
     dependencies();
     if ( @{ $context->{ all_dependencies } } ) {
-        print "$context->{ file }\n";
+        print "$context->{ file_abs_path }\n";
         print join "\n", @{ $context->{ all_dependencies } }, "\n";
     }else{
         print "No local dependencies found for this module\n";
@@ -247,11 +247,10 @@ sub _remote_dir {
         close $fh;
     } 
 
-    if ( -e "$ENV{HOME}/.rperl_remote_dir"  ) {
-        open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
-            $context->{ remote_dir } = <$fh>;
-        close $fh;
-    }
+    return if ! -e "$ENV{HOME}/.rperl_remote_dir";
+    open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
+        $context->{ remote_dir } = <$fh>;
+    close $fh;
 }
 
 sub rsync {
