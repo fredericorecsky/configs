@@ -247,9 +247,11 @@ sub _remote_dir {
         close $fh;
     } 
 
-    open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
-        $context->{ remote_dir } = <$fh>;
-    close $fh;
+    if ( -e "$ENV{HOME}/.rperl_remote_dir"  ) {
+        open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
+            $context->{ remote_dir } = <$fh>;
+        close $fh;
+    }
 }
 
 sub rsync {
@@ -262,7 +264,7 @@ sub rsync {
     
     my $r_mkdir = `ssh $context->{ remote } mkdir -p $remote_dir`;
     
-    my $sync_cmd = "rsync --exclude=.git --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir";
+    my $sync_cmd = "rsync --exclude=.git --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir --delete";
     warn "$sync_cmd \n";
     my $sync = qx/$sync_cmd/;
     print $sync_cmd, "\n";
@@ -329,10 +331,12 @@ sub rperl {
         'echo -n "Remote Shell PID:";',
         'echo $$;', 
         "export PERL5LIB=" . ( $context->{ remote_dir } || $context->{ git_tree } ) . "/lib;", 
-        'cd',( "$context->{ remote_dir };" || "$context->{ cwd };" ), 
+        'cd',( $context->{ remote_dir } || $context->{ cwd } || $context->{ git_tree }  . ";" ),
         $context->{ perl }, @{ $context->{ args } }, ';', 
         'pgrep -P $$;'
         );
+
+    warn Dumper \@cmd;
     
     exec @cmd;
 
