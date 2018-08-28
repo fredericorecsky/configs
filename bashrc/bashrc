@@ -1,0 +1,34 @@
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+if [ ! -f ~/.bashrc ];then
+    echo "No configuration was found, installing myself"
+    echo "$0"
+    ln -s `pwd`/$0 ~/.bashrc
+fi
+
+if [ -n "$DEBUG" ]
+then 
+    echo "debugging on $DEBUG"
+    alias debug_message="echo"
+else
+    #echo "debugging off $DEBUG"
+    alias debug_message="#"
+fi
+
+export GITHUB=~/github
+
+for configuration in $GITHUB/configs/bashrc/*_*;
+do 
+    if [ -f $configuration ];then
+        debug_message "Processing $configuration"
+        . $configuration
+    fi
+done
+
+
+
+

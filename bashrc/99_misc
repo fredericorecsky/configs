@@ -1,0 +1,9 @@
+alias tray='trayer --edge top --align right --widthtype pixel --width 60 --transparent true'
+alias terminal="xterm -bg black -fg white -fa 'Monospace' -fs 12"
+alias terminal_white="xterm -bg white -fg black -fa 'Monospace' -fs 12"
+alias terminal_green='urxvt --background black --foreground green'
+
+export PATH=$PATH:~/github/redis/src
+export PATH=$PATH:~/github/configs/bin
+
+

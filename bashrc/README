@@ -1,0 +1,13 @@
+A more or less structured bashrc 
+
+Each file has the name of it context, makes easier to keep
+
+the bashrc file will include all files on this directory that has a 
+_ in the name. This logic was totally arbitrary. If you want to 
+skip the file rename it without _
+
+if you delete your bashrc and run the bashrc it will add a symlink 
+to ~/.bashrc pointing to it
+
+We assume that you keep the project inside ~/github
+
