@@ -256,7 +256,7 @@ sub _remote_dir {
 sub rsync {
 
     # check requirements
-    my $remote_dir = dirname( $context->{ remote_dir } ? $context->{ remote_dir } : $context->{ git_tree } );
+    my $remote_dir = $context->{ remote_dir } ? $context->{ remote_dir } : dirname( $context->{ git_tree } );
 
     # For the first time sync, after followup the changed files
     print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote } on $remote_dir\n";
