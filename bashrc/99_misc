@@ -2,8 +2,13 @@ alias tray='trayer --edge top --align right --widthtype pixel --width 60 --trans
 alias terminal="xterm -bg black -fg white -fa 'Monospace' -fs 12"
 alias terminal_white="xterm -bg white -fg black -fa 'Monospace' -fs 12"
 alias terminal_green='urxvt --background black --foreground green'
+alias chromium_socks='chromium --proxy-server="socks5://localhost:24024"'
 
 export PATH=$PATH:~/github/redis/src
 export PATH=$PATH:~/github/configs/bin
 
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f ~/Downloads/google-cloud-sdk/path.bash.inc ]; then source ~/Downloads/google-cloud-sdk/path.bash.inc; fi
 
+# The next line enables shell command completion for gcloud.
+if [ -f ~/Downloads/google-cloud-sdk/completion.bash.inc ]; then source ~/Downloads/google-cloud-sdk/completion.bash.inc; fi
