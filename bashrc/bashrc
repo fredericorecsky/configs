@@ -1,22 +1,39 @@
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
+#!/bin/sh
 
-if [ ! -f ~/.bashrc ];then
-    echo "No configuration was found, installing myself"
-    echo "$0"
-    ln -s `pwd`/$0 ~/.bashrc
-fi
-
-if [ -n "$DEBUG" ]
-then 
+if [ -n "$DEBUG" ]; then 
     echo "debugging on $DEBUG"
     alias debug_message="echo"
 else
     #echo "debugging off $DEBUG"
-    alias debug_message="#"
+    alias debug_message="true "
+fi
+
+# If not running interactively, don't do anything
+case $- in
+    *i*)   debug_message "This shell is interactive";;
+    *)  debug_message "This shell is not interactive" ;;
+esac
+
+platform='unknown'
+unamestr=`uname`
+if [ "$unamestr" == 'Linux' ]; then
+   platform='linux'
+elif [ "$unamestr" == 'Darwin' ]; then
+      platform='Darwin'
+fi
+
+filename="$HOME/.bashrc"
+if [ $platform == 'Darwin' ]; then
+    filename="$HOME/.profile"
+fi
+
+if [ ! -e $filename ];then
+    echo "No configuration was found, installing myself on $filename"
+    echo "$0 -> $filename"
+    mydir=`pwd`/$0
+    ln -s $mydir $filename
+else
+    debug_message "Configuration file already exists"
 fi
 
 export GITHUB=~/github
