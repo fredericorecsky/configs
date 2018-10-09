@@ -10,6 +10,7 @@ use File::Basename;
 use File::Path qw/make_path/;
 use IPC::Open3;
 use IO::Select;
+use Getopt::Long;
 use Module::ScanDeps;
 use Sys::Hostname;
 use Symbol 'gensym';
@@ -27,6 +28,7 @@ my $context = {
     perl            => "perl",
     dependencies    => [],
     localhost       => hostname(),
+    action          => "rperl",
 };
 
 my %actions = (
@@ -42,25 +44,22 @@ my %actions = (
     slurp           => \&slurp_dependencies,
 );
 
-if ( @ARGV ) {
-    if ( $ARGV[0] =~ /\:(\w+)/) {
-    $context->{ action } = $1;
-        if ( ! exists $actions{ $context->{ action } }){
-            die "Could not run such action $context->{ action }\n";
-        }
-        shift @{ $context->{ args } };
-    }else{
-        $context->{ action } = "rperl";
-    }
-}
-    
+GetOptions(
+    "file=s"        => \$context->{ file },
+    "test"          => sub {  $context->{ action } = "test" },
+    "host"          => sub {  $context->{ action } = "host" },
+    "remote_dir"    => sub {  $context->{ action } = "remote_dir" },
+    "dep"           => sub {  $context->{ action } = "dep" },
+    "alldep"        => sub {  $context->{ action } = "alldep" },
+    "changed"       => sub {  $context->{ action } = "changed" },
+    "remote"        => sub {  $context->{ action } = "remote" },
+    "slurp"         => sub {  $context->{ action } = "slurp" },
+);
+
 $actions{ $context->{ action } }();
 
 sub test {
-    input_file();
-    git_top_level();  
-    remote_host();
-    _remote_dir();
+    prepare_to_run();
     print Dumper $context;
 }
 
