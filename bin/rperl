@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env perl 
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use File::Basename;
 use File::Path qw/make_path/;
 use IPC::Open3;
 use IO::Select;
-use Getopt::Long;
+use Getopt::Long qw/:config pass_through/;
 use Module::ScanDeps;
 use Sys::Hostname;
 use Symbol 'gensym';
@@ -33,10 +33,10 @@ my $context = {
 
 my %actions = (
     rperl           => \&rperl,
-    test            => \&test,
+    config          => \&dump_context,
     reproduce       => \&reproduce,
     host            => \&host,
-    remote_dir      => \&remote_dir,
+    remote_dir      => \&set_remote_dir,
     dep             => \&list_dependencies,
     alldep          => \&list_all_dependencies,
     changed         => \&modified,
@@ -44,21 +44,43 @@ my %actions = (
     slurp           => \&slurp_dependencies,
 );
 
+my @run_actions;
+
 GetOptions(
     "file=s"        => \$context->{ file },
-    "test"          => sub {  $context->{ action } = "test" },
-    "host"          => sub {  $context->{ action } = "host" },
-    "remote_dir"    => sub {  $context->{ action } = "remote_dir" },
-    "dep"           => sub {  $context->{ action } = "dep" },
-    "alldep"        => sub {  $context->{ action } = "alldep" },
-    "changed"       => sub {  $context->{ action } = "changed" },
-    "remote"        => sub {  $context->{ action } = "remote" },
-    "slurp"         => sub {  $context->{ action } = "slurp" },
+    "config"        => sub { push @run_actions, "config" },
+    "host=s"        => sub { 
+                            push @run_actions, "host"; 
+                            $context->{ remote } = $_[1] 
+                       },
+    "remote_dir:s"    => sub { 
+                            push @run_actions,"remote_dir"; 
+                            $context->{ remote_dir } = $_[1]
+                       },
+    "dep"           => sub { push @run_actions, "dep" },
+    "alldep"        => sub { push @run_actions, "alldep" },
+    "changed"       => sub { push @run_actions, "changed" },
+    "remote"        => sub { push @run_actions, "remote" },
+    "slurp"         => sub { push @run_actions, "slurp" },
+    "run"           => sub { push @run_actions, "rperl" },
+    '<>'            => \&_parameters,
 );
 
-$actions{ $context->{ action } }();
+push @run_actions, "rperl" if !@run_actions;
 
-sub test {
+if ( $ENV{ DEBUG_RPERL } ) {
+    print "Actions: ", map { "$_\n" } @run_actions;
+}
+
+for my $action ( @run_actions ) {
+    $actions{ $action }();
+}
+
+sub _parameters {
+    push @{ $context->{ remote_args } }, $_[0];
+}
+
+sub dump_context {   
     prepare_to_run();
     print Dumper $context;
 }
@@ -73,13 +95,36 @@ sub reproduce {
 }
 
 sub host {
-    remote_host( $context->{ args }[0] );
+    remote_host( $context->{ remote } );
     print "Actual host: $context->{ remote }\n";
 }
 
-sub remote_dir{
-    _remote_dir( $context->{ args }[0] );
-    print "Actual remote directory is $context->{ remote_dir }\n";
+sub set_remote_dir{
+    remote_host();
+
+    if ( ! defined $context->{ remote_dir } ){
+        unlink "$ENV{ HOME }/.rperl_remote_dir";
+    } else {
+        my @cmd = (
+            'ssh', $context->{ remote } , 'cd' , $context->{ remote_dir },
+        );
+        my ( $status, $s,$e ) = _command( @cmd );
+        if ( $status ) {
+            die "[$status] Remote directory $context->{ remote_dir } does not exists\n";
+        }
+
+        open my $fh, ">", "$ENV{HOME}/.rperl_remote_dir" or die;
+            print $fh $context->{ remote_dir };
+        close $fh;
+    }
+
+    undef $context->{ remote_dir };
+    _remote_dir();
+    print "Actual remote directory is " . ( 
+            $context->{ remote_dir } ? 
+            "$context->{ remote_dir }\n" :
+            "not set\n"
+          );
 }
 
 sub remote {
@@ -123,20 +168,23 @@ sub slurp_dependencies {
 }
 
 sub input_file {
-    if ( ! $context->{ file } ) {
-        for my $arg ( @{ $context->{ args } } ) {
-            if ( -e $arg ) {
-                $context->{ file } = $arg;
-            }
+    warn Dumper $context;
+    if ( @{ $context->{ remote_args } } ) {
+        if ( -e $context->{ remote_args }[0] ) {
+            ( $context->{ file } ) = shift @{ $context->{ remote_args } };
         }
     }
+    warn Dumper $context;
     if ( ! $context->{ file } || ! -e $context->{ file } ) {
-        print Dumper $context;
         die "One of the parameters must be a valid perl script\n";
     }
    
     $context->{ file_abs_path } = abs_path( $context->{ file } ); 
-    $context->{ dir_abs_path } = dirname( abs_path( $context->{ file } ));
+    if ( -d $context->{ file_abs_path } ) {
+        $context->{ dir_abs_path } = $context->{ file_abs_path };
+    }else{
+        $context->{ dir_abs_path } = dirname( abs_path( $context->{ file } ));
+    }
 }
 
 sub git_top_level{ 
@@ -147,7 +195,7 @@ sub git_top_level{
     chomp $context->{ git_tree };
 
     # or we have a .fperl_git file
-    if ( $? ) {
+    if ( ! $? ) {
         while ( cwd() ne '/' ) {
             if ( -e ".fperl_git" ) {
                 $context->{ git_tree } = cwd();
@@ -158,9 +206,21 @@ sub git_top_level{
         warn "There is not .fperl_git file\n" if ! -e  "$context->{ git_tree }/.fperl_git";
     }
 
+    if ( $context->{ remote_dir } ) {
+        $context->{ run_path } = 
+            $context->{ remote_dir } . 
+            substr( 
+                $context->{ git_tree },
+                length( dirname( $context->{ git_tree } )),
+            );
+    } else {
+        $context->{ run_path } = $context->{ cwd };
+    }
+
     chdir $context->{ cwd };
 
-    die "The command $context->{ file } is not on a git_tree\n" if ! $context->{ git_tree };
+    die "The command $context->{ file } is not on a git_tree\n"
+        if ! $context->{ git_tree };
 }
 
 sub modified {
@@ -242,14 +302,6 @@ EOF
 }
 
 sub _remote_dir {
-    my $dir = shift;
-
-    if ( $dir ) {
-        open my $fh, ">", "$ENV{HOME}/.rperl_remote_dir" or die;
-            print $fh $dir;
-        close $fh;
-    } 
-
     return if ! -e "$ENV{HOME}/.rperl_remote_dir";
     open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
         $context->{ remote_dir } = <$fh>;
@@ -262,64 +314,27 @@ sub rsync {
     my $remote_dir = $context->{ remote_dir } ? $context->{ remote_dir } : dirname( $context->{ git_tree } );
 
     # For the first time sync, after followup the changed files
-    print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote } on $remote_dir\n";
+    print "Prepare for: $context->{ file } from $context->{ cwd } @ $context->{ remote } on $remote_dir\n" if $ENV{ DEBUG_RPERL };
     
     my $r_mkdir = `ssh $context->{ remote } mkdir -p $remote_dir`;
     
     my $sync_cmd = "rsync --exclude=.git --cvs-exclude -a $context->{ git_tree } $context->{ remote }:$remote_dir --delete";
-    warn "$sync_cmd \n";
+    warn "$sync_cmd \n" if $ENV{ DEBUG_RPERL };
     my $sync = qx/$sync_cmd/;
-    print $sync_cmd, "\n";
     if ( $? ) {
         die "$?\nError when syncing $context->{ remote }:$context->{ git_tree }\n";
     }else{
-        print "Syncronized $context->{ remote }:$context->{ git_tree }\n";
+        print "Syncronized to: $context->{ remote }:$remote_dir\n";
     }
 }
 
 sub prepare_to_run {
     input_file();
-    git_top_level();  
     remote_host();
     _remote_dir();
+    git_top_level();  
     die "There is no remote configured, please run rperl_host!\n" 
         if ! $context->{ remote };
-}
-
-# return file handles?
-sub run_remote {
-
-    my @cmd = (
-        'ssh', $context->{ remote }, 
-        #'echo -n "Remote Shell PID:";',
-        'echo $$;', 
-        "export PERL5LIB=$context->{ git_tree }/lib;", 
-        'cd', "$context->{ cwd };", 
-        $context->{ perl }, @{ $context->{ args } }, ';', 
-        'pgrep -P $$;'
-        );
-
-    my($wtr, $rdr, $err);
-    my $pid = open3( $wtr, $rdr, $err, @cmd );
-    $context->{ remote_shell_pid } = <$rdr>;
-
-    warn "[INFO] $context->{ remote }:$context->{ remote_shell_pid }\n";
-
-    waitpid( $pid, 0 );
-
-
-    return <$rdr>;
-}
-
-#
-sub run_local {
-    my @cmd = @_;
-
-    my($wtr, $rdr, $err);
-    my $pid = open3( $wtr, $rdr, $err, @cmd );
-    waitpid( $pid, 0 );
-
-    return $? >> 8;
 }
 
 sub rperl {
@@ -328,25 +343,30 @@ sub rperl {
 
     rsync();
 
+    $context->{ io_sync } = 1;
+
     my @cmd = (
         'ssh', $context->{ remote }, 
         'echo -n "Remote Shell PID:";',
-        'echo $$;', 
-        "export PERL5LIB=" . ( $context->{ remote_dir } || $context->{ git_tree } ) . "/lib;", 
-        'cd',( $context->{ remote_dir } || $context->{ cwd } || $context->{ git_tree }  . ";" ),
+        'export RPERL_PID=$$;', 
+        'echo $RPERL_PID;',
+        "export PERL5LIB=$context->{ run_path }/lib:\$PERL5LIB ;", 
+        'cd', $context->{ run_path }, ';',
         $context->{ perl }, @{ $context->{ args } }, ';', 
-        'pgrep -P $$;'
+        'pgrep -P $RPERL_PID;',
+        'echo',
         );
 
-    warn Dumper \@cmd;
+    if ( $ENV{ DEBUG_RPERL } ) {
+        warn Dumper \@cmd; 
+        print join " ", @cmd, "\n";
+    }
     
     my ( $status, $stdout, $stderr ) = _command( @cmd );
     if ( $status ) {
-        print join "\n\t->", $status, $stdout, $stderr;
-    }else{
-        print join "\n\t+>", $status, $stdout, $stderr;
+        print "Error $status when running $context->{ file }\n";
+        print join " ", @cmd, "\n";
     }
-
 }
 
 sub _command {
@@ -374,11 +394,14 @@ sub _command {
                 next;
             } else {
                 if ( $fh == $rdr ) {
-                    $stdout .= $line || "x";
+                    $stdout .= $line;
+                    print $line if $context->{ io_sync };
                     next;
                 }
                 if ( $fh == $err ) {
-                    $stderr .= $line || "y";
+                    $stderr .= $line;
+                    warn $line if $context->{ io_sync };
+                    next;
                 }
             }
         }
@@ -387,6 +410,5 @@ sub _command {
     waitpid( $pid, 0 );
 
     return (( $? >> 8 ), $stdout, $stderr );
-    
 }
 
