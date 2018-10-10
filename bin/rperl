@@ -3,9 +3,15 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-
 use Cwd qw/abs_path cwd getcwd/;
+use File::Basename;
+
+BEGIN {
+    my $abs_path = dirname( dirname ( abs_path( $0 ) ) );
+    push @INC, $abs_path . "/lib";
+}
+
+use Data::Dumper;
 use File::Basename;
 use File::Path qw/make_path/;
 use Getopt::Long qw/:config pass_through/;
@@ -93,12 +99,12 @@ sub reproduce {
 }
 
 sub host {
-    remote_host( $context->{ remote } );
+    MyPerl::remote_host($context, $context->{ remote } );
     print "Actual host: $context->{ remote }\n";
 }
 
 sub set_remote_dir{
-    remote_host();
+    MyPerl::remote_host($context);
 
     if ( ! defined $context->{ remote_dir } ){
         unlink "$ENV{ HOME }/.rperl_remote_dir";
@@ -166,7 +172,7 @@ sub slurp_dependencies {
 }
 
 sub input_file {
-    if ( @{ $context->{ remote_args } } ) {
+    if ( $context->{ remote_args } && @{ $context->{ remote_args } } ) {
         if ( -e $context->{ remote_args }[0] ) {
             ( $context->{ file } ) = shift @{ $context->{ remote_args } };
         }
@@ -272,31 +278,6 @@ sub list_all_dependencies {
     }
 }
 
-sub remote_host {
-    my $host = shift;
-    
-    if ( $host ) {
-        my $run = `ssh $host exit`;  # TODO : exists_ssh_host
-        
-        if ( $? ){
-            die <<EOF;
-        The host: $host is offline or not configured on 
-        ssh config file. Please check your ssh config on 
-        $ENV{HOME}/.ssh/config.
-EOF
-        }else{
-            open my $fh , ">", "$ENV{HOME}/.rperl_remote" or die;
-                print $fh "$host";
-            close $fh;
-        }
-    }
-    
-    #eval
-    open my $fh, "<", "$ENV{HOME}/.rperl_remote" or die;
-        $context->{ remote } = <$fh>;
-    close $fh;
-}
-
 sub _remote_dir {
     return if ! -e "$ENV{HOME}/.rperl_remote_dir";
     open my $fh, "<",  "$ENV{HOME}/.rperl_remote_dir" or die;
@@ -326,7 +307,7 @@ sub rsync {
 
 sub prepare_to_run {
     input_file();
-    remote_host();
+    MyPerl::remote_host($context);
     _remote_dir();
     git_top_level();  
     die "There is no remote configured, please run rperl_host!\n" 
