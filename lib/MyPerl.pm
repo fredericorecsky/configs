@@ -52,4 +52,33 @@ sub execute {
     return (( $? >> 8 ), $stdout, $stderr );
 }
 
+sub remote_host {
+    my ( $context, $host ) = shift;
+    
+    if ( $host ) {
+        my $run = `ssh $host exit`;  # TODO : exists_ssh_host
+        
+        if ( $? ){
+            die <<EOF;
+        The host: $host is offline or not configured on 
+        ssh config file. Please check your ssh config on 
+        $ENV{HOME}/.ssh/config.
+EOF
+        }else{
+            open my $fh , ">", "$ENV{HOME}/.rperl_remote" or die;
+                print $fh "$host";
+            close $fh;
+        }
+    }
+    
+    #eval
+    open my $fh, "<", "$ENV{HOME}/.rperl_remote" or die;
+        $context->{ remote } = <$fh>;
+    close $fh;
+}
+
+
+
+
+
 1;
