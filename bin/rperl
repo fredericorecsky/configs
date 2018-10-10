@@ -210,7 +210,7 @@ sub git_top_level{
         $context->{ run_path } = 
             $context->{ remote_dir } . 
             substr( 
-                $context->{ git_tree },
+                $context->{ cwd },
                 length( dirname( $context->{ git_tree } )),
             );
     } else {
