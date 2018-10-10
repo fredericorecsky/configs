@@ -66,7 +66,7 @@ sub git_info {
         }
         print "[";
         print color( 'magenta' );
-        print "$origin:";
+        print $origin ? "$origin:" : ":" ;
         print color( 'cyan' );
         print "$git_branch";
         print color( 'reset' );
