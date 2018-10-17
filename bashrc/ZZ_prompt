@@ -1,2 +1,2 @@
 export PATH=~/bin:$PATH
-PS1='@$(prompt.pl $?)'
+PS1='$(necroprompt $?)'
