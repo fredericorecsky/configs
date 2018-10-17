@@ -1,2 +1,7 @@
 export PATH=~/bin:$PATH
-PS1='$(necroprompt $?)'
+
+if [ -x "$(command -v necroprompt)" ];then
+    PS1='$(necroprompt $?)'
+else 
+    PS1='@>'
+fi
