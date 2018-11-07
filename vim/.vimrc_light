@@ -1,0 +1,19 @@
+source /etc/vimrc
+
+set wrap
+set tabstop=4
+set autoindent
+set softtabstop=4
+set expandtab
+set shiftwidth=4
+set wildchar=<F8>
+set number
+
+set background=light
+
+set list
+syntax on
+
+let g:solarized_termcolors=256
+colorscheme solarized 
+
