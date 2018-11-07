@@ -46,4 +46,23 @@ do
     fi
 done
 
+# Copy my versions of .vimrc over
 
+
+
+
+pushd . &>/dev/null
+cd  
+for vim in $GITHUB/configs/vim/.v*;
+do 
+    file=`basename $vim`
+    if ! [[ -L $file ]]; then
+        if [ -e $file ]; then
+            rm $file
+            ln -s $vim .
+        else 
+            ln -s $vim .
+        fi
+    fi
+done
+popd  &>/dev/null
