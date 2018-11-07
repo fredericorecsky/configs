@@ -10,8 +10,8 @@ alias terminal_green='urxvt --background black --foreground green'
 alias chromium_socks='chromium --proxy-server="socks5://localhost:24024"'
 alias chromium_proxy='chromium  --proxy-auto-detect'
 
-alias darkvim='vim -u ~/.vimrc_dark !*'
-alias lightvim='vim -u ~/.vimrc_light !*' 
+alias darkvim='vim -u ~/.vimrc_dark '
+alias lightvim='vim -u ~/.vimrc_light ' 
 
 export PATH=$PATH:~/github/redis/src
 export PATH=$PATH:~/github/necroperl/bin
