@@ -6,6 +6,9 @@ alias terminal_white="xterm -bg white -fg black -fa 'Monospace' -fs 12"
 alias terminal_white_big="xterm -bg white -fg black -fa 'Monospace' -fs 18"
 alias terminal_green='urxvt --background black --foreground green'
 alias chromium_socks='chromium --proxy-server="socks5://localhost:24024"'
+alias chromium_proxy='chromium  --proxy-auto-detect'
+
+
 
 export PATH=$PATH:~/github/redis/src
 export PATH=$PATH:~/github/necroperl/bin
