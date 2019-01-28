@@ -33,12 +33,18 @@ if [ ! -e $filename ];then
     mydir=`pwd`/$0
     ln -s $mydir $filename
 else
-    debug_message "Configuration file already exists"
+    date=`date +%s`
+    destiny="$filename.$date"
+    mv $filename $destiny
+    debug_message "Configuration file already exists "
+    debug_message "moved old to $destiny and installed a new"
 fi
 
-export GITHUB=~/github
+if [ -z "${GITHUBDIR}" ];then
+    GITHUBDIR=~/github
+fi
 
-for configuration in $GITHUB/configs/bashrc/*_*;
+for configuration in $GITHUBDIR/configs/bashrc/*_*;
 do 
     if [ -f $configuration ];then
         debug_message "Processing $configuration"
@@ -50,7 +56,7 @@ done
 
 pushd . &>/dev/null
 cd  
-for vim in $GITHUB/configs/vim/.v*;
+for vim in $GITHUBDIR/configs/vim/.v*;
 do 
     file=`basename $vim`
     if ! [[ -L $file ]]; then
