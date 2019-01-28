@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "${GITHUBDIR}" ];then
+    GITHUBDIR=~/github/configs
+fi
+
+if [ ! -d $GITHUBDIR ];then
+    echo "The directory of configs source code $GITHUBDIR does not exists"
+    echo "install it using"
+    echo "curl -L https://raw.githubusercontent.com/fredericorecsky/configs/master/bin/install_dev_configs | sh"
+    exit 1
+fi
+
+cd $GITHUBDIR
+if [ $? -eq 0 ];then 
+    git pull 
+    if [ $? -ne 0 ];then
+        echo "Was not possible to update"
+        exit 1
+    fi
+    echo "load your shell again to run the updated version"
+else
+    echo "Could not change to $GITHUBDIR"
+    exit 1
+fi
+
+
