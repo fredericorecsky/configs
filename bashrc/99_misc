@@ -13,6 +13,10 @@ alias chromium_proxy='chromium  --proxy-auto-detect'
 alias darkvim='vim -u ~/.vimrc_dark '
 alias lightvim='vim -u ~/.vimrc_light ' 
 
+alias apple_key_fn='sudo echo 2 | sudo tee /sys/module/hid_apple/parameters/fnmode'
+
+alias o_startx='export OFFICE=1;startx' 
+
 export PATH=$PATH:~/github/redis/src
 export PATH=$PATH:~/github/necroperl/bin
 
@@ -21,3 +25,4 @@ if [ -f ~/Downloads/google-cloud-sdk/path.bash.inc ]; then source ~/Downloads/go
 
 # The next line enables shell command completion for gcloud.
 if [ -f ~/Downloads/google-cloud-sdk/completion.bash.inc ]; then source ~/Downloads/google-cloud-sdk/completion.bash.inc; fi
+
