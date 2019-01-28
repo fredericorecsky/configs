@@ -33,11 +33,16 @@ if [ ! -e $filename ];then
     mydir=`pwd`/$0
     ln -s $mydir $filename
 else
-    date=`date +%s`
-    destiny="$filename.$date"
-    mv $filename $destiny
-    debug_message "Configuration file already exists "
-    debug_message "moved old to $destiny and installed a new"
+    # if it is a syslink to bashrc does nothing
+    if [ -L $filename ];then
+        debug_message "Already is a syslink, so we skip the copy step"
+    else
+        date=`date +%s`
+        destiny="$filename.$date"
+        mv $filename $destiny
+        debug_message "Configuration file already exists "
+        debug_message "moved old to $destiny and installed a new"
+    fi
 fi
 
 if [ -z "${GITHUBDIR}" ];then
