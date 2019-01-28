@@ -1,0 +1,44 @@
+#!/bin/sh
+
+which git &>/dev/null
+if [ $? -eq 0 ]; then
+    echo "git is present.."
+else 
+    echo "Need git scm to install"
+    exit 1;
+fi
+
+which perl &>/dev/null
+if [ $? -eq 0 ]; then
+    echo "perl is present.."
+else 
+    echo "Need perl to install"
+    exit 1;
+fi
+
+if [ -z "${NECROCONF_URL}" ]; then
+    NECROCONF_URL=https://github.com/fredericorecsky/configs.git
+fi
+
+# if exists ~/github 
+GITHUBDIR=~/github2
+if [ ! -d $GITHUBDIR ];then
+    mkdir -p $GITHUBDIR
+fi
+
+cd $GITHUBDIR
+if [ $? -eq 0 ];then 
+    git clone $NECROCONF_URL
+    if [ $? ];then
+        echo "could not clone $NECROCONF_URL"
+        echo "verify your internet connection settings"
+        exit 1;
+    fi
+    cd configs
+    echo "Run bashrc"
+    #bash bashrc/bashrc
+else
+    echo "Could not change to github dir"
+    exit 1;
+fi
+
