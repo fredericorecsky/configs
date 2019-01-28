@@ -48,9 +48,6 @@ done
 
 # Copy my versions of .vimrc over
 
-
-
-
 pushd . &>/dev/null
 cd  
 for vim in $GITHUB/configs/vim/.v*;
