@@ -1,4 +1,4 @@
-# Linux terminal config 
+# My linux bash terminal config 
 
 This git repository contains a set of config files and bash scripts
 that have tooling that I use when doing software development or 
