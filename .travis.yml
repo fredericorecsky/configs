@@ -9,6 +9,8 @@ perl:
 
 install:
     - bin/install_dev_configs
+
+script:
     - bin/update_dev_configs
 
 notifications:
