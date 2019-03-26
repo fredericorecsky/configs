@@ -7,7 +7,8 @@ set shiftwidth=4
 set wildchar=<F8>
 set number
 
-set bg=dark
+" set bg=dark
+" set bg=light
 
 set list
 syntax on
@@ -15,7 +16,7 @@ let g:solarized_termcolors=256
 
 " colorscheme solarized
 
-colorscheme colorsbox-stblue
+"colorscheme colorsbox-stblue
 " colorscheme colorsbox-material
 " colorscheme colorsbox-stbright
 " colorscheme colorsbox-stnight
