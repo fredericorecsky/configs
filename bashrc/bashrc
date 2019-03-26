@@ -16,16 +16,14 @@ esac
 
 platform='unknown'
 unamestr=`uname`
+debug_message $unamestr
 if [ "$unamestr" == 'Linux' ]; then
    platform='linux'
 elif [ "$unamestr" == 'Darwin' ]; then
       platform='Darwin'
 fi
 
-filename="$HOME/.bashrc"
-if [ $platform == 'Darwin' ]; then
-    filename="$HOME/.profile"
-fi
+filename="$HOME/.bash_profile"
 
 if [ ! -e $filename ];then
     echo "No configuration was found, installing myself on $filename"
