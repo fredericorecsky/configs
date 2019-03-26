@@ -1,0 +1,3 @@
+if [ "$platform" == 'Darwin' ]; then
+    export PATH=$PATH:/Applications/MySQLWorkbench.app/Contents/MacOS
+fi
