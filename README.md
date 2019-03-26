@@ -1,12 +1,14 @@
-# My linux bash terminal config 
+# My bash terminal config
 
 This git repository contains a set of config files and bash scripts
 that have tooling that I use when doing software development or 
 when I am doing any dev-ops task.
 
+It will work on mac and linux. 
+
 ## Installing
 
-Assuming that you have curl installed on your system:
+Assuming that you have curl and git installed on your system:
 
      curl -L https://raw.githubusercontent.com/fredericorecsky/configs/master/bin/install_dev_configs | sh
 
