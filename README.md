@@ -6,6 +6,10 @@ when I am doing any dev-ops task.
 
 It will work on mac and linux. 
 
+## Build Status
+
+![Travis ci build](https://travis-ci.org/fredericorecsky/configs.svg?branch=master)
+
 ## Installing
 
 Assuming that you have curl and git installed on your system:
