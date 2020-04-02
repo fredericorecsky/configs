@@ -72,3 +72,9 @@ do
     fi
 done
 popd  &>/dev/null
+
+# Global .gitignore
+
+cp $GITHUBDIR/configs/git/.global_gitignore ~/.gitignore
+git config --global core.excludesfile ~/.gitignore
+
