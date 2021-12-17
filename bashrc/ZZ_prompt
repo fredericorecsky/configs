@@ -1,9 +1,9 @@
 export PATH=~/bin:$PATH
 
-if [ -z "$NOPROMPT" ]; then 
-    if [ -x "$(command -v necroprompt)" ];then
-        PS1='$(necroprompt $?)'
-    fi
-else 
-    PS1=$PS1
-fi
+# if [ -z "$NOPROMPT" ]; then 
+#     if [ -x "$(command -v necroprompt)" ];then
+#         PS1='$(necroprompt $?)'
+#     fi
+# else 
+#     PS1=$PS1
+# fi

@@ -55,7 +55,7 @@ do
     fi
 done
 
-# Copy my versions of .vimrc over
+# Update vim with the the default version
 
 pushd . &>/dev/null
 cd  

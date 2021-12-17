@@ -8,16 +8,8 @@ else
     exit 1;
 fi
 
-which perl &>/dev/null
-if [ $? -eq 0 ]; then
-    echo "perl is present.."
-else 
-    echo "Need perl to install"
-    exit 1;
-fi
-
-if [ -z "${NECROCONF_URL}" ]; then
-    NECROCONF_URL=https://github.com/fredericorecsky/configs.git
+if [ -z "${SHELL_ENVIRONMENT_URL}" ]; then
+    SHELL_ENVIRONMENT_URL=https://github.com/fredericorecsky/configs.git
 fi
 
 if [ -z "${GITHUBDIR}" ];then
@@ -31,9 +23,9 @@ fi
 cd $GITHUBDIR
 if [ $? -eq 0 ];then 
     if [ ! -d "configs" ];then 
-        git clone $NECROCONF_URL
+        git clone $SHELL_ENVIRONMENT_URL
         if [ $? -ne 0 ];then
-            echo "could not clone $NECROCONF_URL"
+            echo "could not clone $SHELL_ENVIRONMENT_URL"
             echo "verify your internet connection settings"
             exit 1;
         fi

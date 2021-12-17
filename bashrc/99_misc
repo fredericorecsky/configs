@@ -15,14 +15,11 @@ alias lightvim='vim -u ~/.vimrc_light '
 
 alias apple_key_fn='sudo echo 2 | sudo tee /sys/module/hid_apple/parameters/fnmode'
 
-alias o_startx='export OFFICE=1;startx' 
-
 export PATH=$PATH:~/github/redis/src
-export PATH=$PATH:~/github/necroperl/bin
 
-# The next line updates PATH for the Google Cloud SDK.
+# TODO The next line updates PATH for the Google Cloud SDK.
 if [ -f ~/Downloads/google-cloud-sdk/path.bash.inc ]; then source ~/Downloads/google-cloud-sdk/path.bash.inc; fi
 
-# The next line enables shell command completion for gcloud.
+# TODO The next line enables shell command completion for gcloud.
 if [ -f ~/Downloads/google-cloud-sdk/completion.bash.inc ]; then source ~/Downloads/google-cloud-sdk/completion.bash.inc; fi
 
