@@ -1,14 +1,9 @@
-# My bash terminal config
+# Default bash config
 
 This git repository contains a set of config files and bash scripts
-that have tooling that I use when doing software development or 
-when I am doing any dev-ops task.
+that bootstrap the default shell environment that I use on my machines.
 
-It will work on mac and linux. 
-
-## Build Status
-
-![Travis ci build](https://travis-ci.org/fredericorecsky/configs.svg?branch=master)
+It works on Linux, Macos and wsl.
 
 ## Installing
 
@@ -25,7 +20,7 @@ Go inside the ~/github/configs/bin and run update_dev_configs
 It has a place where the bash variables and scripts as well aliases 
 are stored and when a new shell starts, it will read from that dir.
 
-The files are usually on your homegir inside github/configs dir.
+The files are usually on your homedir inside github/configs dir.
 
 The files that start with 99_internal will be ignored on git and should
 contain specific local configuration. The rest is generic as possible.
@@ -47,5 +42,7 @@ so the number on front means the order.
 
 ## I want to add my own stuff
 
-If is really personal, add a 99_internal file and add your stuff. If you think
-that is useful or you want to fix any of the above, just send a merge request
+This project is mainly a distributed way to have my shell environements so if something
+is generic and useful feel free to add and request a merge.
+
+If it is really personal/local, add a 99_internal file and add your stuff. 
